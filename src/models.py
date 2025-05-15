@@ -37,16 +37,16 @@ class Favorites(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "favorite_people": [fav.id for fav in self.favorite_people],
-            "favorite_planets": [fav.id for fav in self.favorite_planets],
-            "favorite_species": [fav.id for fav in self.favorite_species],
-            "favorite_vehicles": [fav.id for fav in self.favorite_vehicles]
+            "favorite_people": [fav.name for fav in self.favorite_people],
+            "favorite_planets": [fav.name for fav in self.favorite_planets],
+            "favorite_species": [fav.name for fav in self.favorite_species],
+            "favorite_vehicles": [fav.name for fav in self.favorite_vehicles]
         }
     
 class People(db.Model):
     __tablename__ = "people"
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
     gender: Mapped[str] = mapped_column(String(120))
     skin_color: Mapped[str] = mapped_column(String(120))
     hair_color: Mapped[str] = mapped_column(String(120))
@@ -77,13 +77,13 @@ class People(db.Model):
             "species": self.species.name if self.species else None,
             "homeworld": self.homeworld.name if self.homeworld else None,
             "pilots": [pilot.vehicle_id for pilot in self.pilots],
-            "favorites": [fav.id for fav in self.favorites]
+            "favorites": [fav.name for fav in self.favorites]
         }
 
 class Planets(db.Model):
     __tablename__ = "planets"
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
     climate:  Mapped[str] = mapped_column(String(120))
     surface_water: Mapped[int] = mapped_column(Integer())
     diameter: Mapped[int] = mapped_column(Integer())
@@ -98,7 +98,7 @@ class Planets(db.Model):
 class Species(db.Model):
     __tablename__ = "species"
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
     classification: Mapped[str] = mapped_column(String(120))
     designation: Mapped[str] = mapped_column(String(120))
     eye_colors: Mapped[str] = mapped_column(String(120))
@@ -117,7 +117,7 @@ class Species(db.Model):
 
 class Vehicles(db.Model):
     __tablename__ = "vehicles"
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
     name: Mapped[str] = mapped_column(String(120))
     consumables: Mapped[str] = mapped_column(String(120))
     cargo_capacity: Mapped[int] = mapped_column(Integer())
