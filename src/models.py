@@ -105,8 +105,8 @@ class Species(db.Model):
     skin_colors: Mapped[str] = mapped_column(String(120))
     language: Mapped[str] = mapped_column(String(120))
     hair_colors: Mapped[str] = mapped_column(String(120))
-    average_lifespan:  Mapped[int] = mapped_column(Integer())
-    average_height:  Mapped[int] = mapped_column(Integer())
+    average_lifespan:  Mapped[int] = mapped_column(Integer(), nullable=True)
+    average_height:  Mapped[int] = mapped_column(Integer(), nullable=True)
     
     homeworld_id: Mapped[int] = mapped_column(ForeignKey("planets.id"), nullable=True)
     homeworld: Mapped["Planets"] = relationship(back_populates="fauna")

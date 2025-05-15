@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, Users, Favorites, People, Planets, Species, Vehicles
+from models import db, Users, Favorites, People, Planets, Species, Vehicles, Pilots
 from sqlalchemy import select
 
 app = Flask(__name__)
@@ -87,10 +87,57 @@ def delete_user(id):
     db.session.commit()
     return jsonify({"message": "User deleted"}), 200
 
-@app.route('/favorites', methods=['GET'])
-def get_favorites():
-    favorites = db.session.execute(select(Favorites)).scalars().all()
-    return jsonify([obj.serialize() for obj in favorites]), 200
+@app.route("/users/<int:id>/favorites", methods=["GET"])
+def get_user(id):
+    stmt = select(Favorites).where(Users.id == id)
+    favorites = db.session.execute(stmt).scalar_one_or_none()
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(favorites.serialize()), 200
+
+@app.route("/favorite/planet/<int:id>", methods=["POST"])
+def create_user():
+    data = request.get_json()
+    if not data or "name" not in data:
+        return jsonify({"error": "Missing data"}), 400
+    new_fav_planet = Favorites(
+        name=data["name"]
+    )
+    db.session.add(new_fav_planet)
+    db.session.commit()
+    return jsonify(new_fav_planet.serialize()), 201
+
+@app.route("/favorite/people/<int:people_id", methods=["POST"])
+def create_user():
+    data = request.get_json()
+    if not data or "name" not in data:
+        return jsonify({"error": "Missing data"}), 400
+    new_fav_person = Users(
+        name=data["name"]
+    )
+    db.session.add(new_fav_person)
+    db.session.commit()
+    return jsonify(new_fav_person.serialize()), 201
+
+@app.route("/favorite/planet/<int:id>", methods=["DELETE"])
+def delete_user(id):
+    stmt = select(Favorites).where(Favorites.id == id)
+    fav_planet = db.session.execute(stmt).scalar_one_or_none()
+    if user is None:
+        return jsonify({"error": "Planet not found"}), 404
+    db.session.delete(fav_planet)
+    db.session.commit()
+    return jsonify({"message": "Planet deleted"}), 200
+
+@app.route("favorite/people/<int:id>", methods=["DELETE"])
+def delete_user(id):
+    stmt = select(Favorites).where(Favorites.id == id)
+    fav_person = db.session.execute(stmt).scalar_one_or_none()
+    if fav_person is None:
+        return jsonify({"error": "Person not found"}), 404
+    db.session.delete(fav_person)
+    db.session.commit()
+    return jsonify({"message": "Person deleted"}), 200
 
 ##deprecated version
 # @app.route('/people', methods=['GET'])
@@ -117,15 +164,52 @@ def get_planets():
     planets = db.session.execute(select(Planets)).scalars().all()
     return jsonify([obj.serialize() for obj in planets]), 200
 
+@app.route("/planets/<int:id>", methods=["GET"])
+def get_planet(id):
+    stmt = select(Planets).where(Planets.id == id)
+    planet = db.session.execute(stmt).scalar_one_or_none()
+    if planet is None:
+        return jsonify({"error": "Planet not found"}), 404
+    return jsonify(planet.serialize()), 200
+
 @app.route('/species', methods=['GET'])
 def get_species():
     species = db.session.execute(select(Species)).scalars().all()
     return jsonify([obj.serialize() for obj in species]), 200
 
+@app.route("/species/<int:id>", methods=["GET"])
+def get_species(id):
+    stmt = select(Species).where(Species.id == id)
+    species = db.session.execute(stmt).scalar_one_or_none()
+    if species is None:
+        return jsonify({"error": "Species not found"}), 404
+    return jsonify(species.serialize()), 200
+
 @app.route('/vehicles', methods=['GET'])
 def get_vehicles():
     vehicles = db.session.execute(select(Vehicles)).scalars().all()
     return jsonify([obj.serialize() for obj in vehicles]), 200
+
+@app.route("/vehicles/<int:id>", methods=["GET"])
+def get_vehicle(id):
+    stmt = select(Vehicles).where(Vehicles.id == id)
+    vehicle = db.session.execute(stmt).scalar_one_or_none()
+    if vehicle is None:
+        return jsonify({"error": "Vehicle not found"}), 404
+    return jsonify(vehicle.serialize()), 200
+
+@app.route('/pilots', methods=['GET'])
+def get_pilots():
+    pilots = db.session.execute(select(Pilots)).scalars().all()
+    return jsonify([obj.serialize() for obj in pilots]), 200
+
+@app.route("/pilots/<int:id>", methods=["GET"])
+def get_pilot(id):
+    stmt = select(Pilots).where(Pilots.id == id)
+    pilot = db.session.execute(stmt).scalar_one_or_none()
+    if pilot is None:
+        return jsonify({"error": "Pilot not found"}), 404
+    return jsonify(pilot.serialize()), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

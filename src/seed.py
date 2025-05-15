@@ -56,7 +56,7 @@ with app.app_context():
         hair_colors = "n/a",
         homeworld = tatooine,
         average_lifespan = None,
-        average_height = "n/a",
+        average_height = None,
     )
     db.session.add_all([human, droid])
     db.session.commit()
