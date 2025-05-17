@@ -8,6 +8,7 @@ db = SQLAlchemy()
 class Users(db.Model):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
@@ -16,31 +17,29 @@ class Users(db.Model):
     def serialize(self):
         return {
             "id": self.id,
+            "name": self.name,
             "email": self.email,
+            "is_active": self.is_active,
+            "favorites": [favorite.serialize() for favorite in self.favorites]
         }
     
 class Favorites(db.Model):
     __tablename__ = "favorites"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    people_id: Mapped[int] = mapped_column(ForeignKey("people.id"), nullable=True)
-    planet_id: Mapped[int] = mapped_column(ForeignKey("planets.id"), nullable=True)
-    species_id: Mapped[int] = mapped_column(ForeignKey("species.id"), nullable=True)
-    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"), nullable=True)
-    
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    item_id: Mapped[int] = mapped_column(nullable=False)
+    item_type: Mapped[str] = mapped_column(nullable=False)
+    item_name: Mapped[str] = mapped_column(String(120))
+
     user: Mapped["Users"] = relationship(back_populates="favorites")
-    favorite_people: Mapped["People"] = relationship(back_populates="favorites")
-    favorite_planets: Mapped["Planets"] = relationship(back_populates="favorites")
-    favorite_species: Mapped["Species"] = relationship(back_populates="favorites")
-    favorite_vehicles: Mapped["Vehicles"] = relationship(back_populates="favorites")
 
     def serialize(self):
         return {
             "id": self.id,
-            "favorite_people": [fav.name for fav in self.favorite_people],
-            "favorite_planets": [fav.name for fav in self.favorite_planets],
-            "favorite_species": [fav.name for fav in self.favorite_species],
-            "favorite_vehicles": [fav.name for fav in self.favorite_vehicles]
+            "user_id": self.user_id,
+            "item_type": self.item_type,
+            "item_id": self.item_id,
+            "item_name": self.item_name
         }
     
 class People(db.Model):
@@ -60,11 +59,14 @@ class People(db.Model):
     homeworld_id: Mapped[int] = mapped_column(ForeignKey("planets.id"), nullable=True)
     homeworld: Mapped["Planets"] = relationship(back_populates="residents")
 
-    pilots: Mapped[list["Pilots"]] =relationship(back_populates="person")
-
-    favorites: Mapped[list["Favorites"]] = relationship(back_populates="favorite_people")
-
     def serialize(self):
+        from models import db, Favorites
+        favorites = db.session.query(Favorites).filter_by(
+            item_type="person",
+            item_id=self.id
+        ).all()
+        favorited_by = [fav.user.name for fav in favorites if fav.user]
+
         return {
             "id": self.id,
             "name": self.name,
@@ -76,8 +78,7 @@ class People(db.Model):
             "mass": self.mass,
             "species": self.species.name if self.species else None,
             "homeworld": self.homeworld.name if self.homeworld else None,
-            "pilots": [pilot.vehicle_id for pilot in self.pilots],
-            "favorites": [fav.name for fav in self.favorites]
+            "favorited_by": favorited_by
         }
 
 class Planets(db.Model):
@@ -93,7 +94,27 @@ class Planets(db.Model):
     
     residents: Mapped[list["People"]] = relationship(back_populates="homeworld")
     fauna: Mapped[list["Species"]] = relationship(back_populates="homeworld")
-    favorites: Mapped[list["Favorites"]] = relationship(back_populates="favorite_planets")
+
+    def serialize(self):
+        from models import db, Favorites
+        favorites = db.session.query(Favorites).filter_by(
+            item_type="planet",
+            item_id=self.id
+        ).all()
+        favorited_by = [fav.user.name for fav in favorites if fav.user]
+        return {
+            "id": self.id,
+            "name": self.name,
+            "climate": self.climate,
+            "surface_water": self.surface_water,
+            "diameter": self.diameter,
+            "gravity": self.gravity,
+            "orbital_period": self.orbital_period,
+            "population": self.population,
+            "residents": [resident.name for resident in self.residents] if self.residents else None,
+            "fauna": [species.name for species in self.fauna] if self.fauna else None,
+            "favorited_by": favorited_by
+        }
 
 class Species(db.Model):
     __tablename__ = "species"
@@ -113,7 +134,28 @@ class Species(db.Model):
 
     members: Mapped[list["People"]] = relationship(back_populates="species")
 
-    favorites: Mapped[list["Favorites"]] = relationship(back_populates="favorite_species")
+    def serialize(self):
+        from models import db, Favorites
+        favorites = db.session.query(Favorites).filter_by(
+            item_type="species",
+            item_id=self.id
+        ).all()
+        favorited_by = [fav.user.name for fav in favorites if fav.user]
+        return {
+            "id": self.id,
+            "name": self.name,
+            "classification": self.classification,
+            "designation": self.designation,
+            "eye_colors": self.eye_colors,
+            "skin_colors": self.skin_colors,
+            "language": self.language,
+            "hair_colors": self.hair_colors,
+            "average_lifespan": self.average_lifespan,
+            "average_height": self.average_height,
+            "homeworld": self.homeworld.name if self.homeworld else None,
+            "members": [member.name for member in self.members] if self.members else None,
+            "favorited_by": favorited_by
+        }
 
 class Vehicles(db.Model):
     __tablename__ = "vehicles"
@@ -127,15 +169,23 @@ class Vehicles(db.Model):
     model: Mapped[str] = mapped_column(String(120))
     vehicle_class: Mapped[str] = mapped_column(String(120))
 
-    pilots: Mapped[list["Pilots"]] = relationship(back_populates="vehicle")
-
-    favorites: Mapped[list["Favorites"]] = relationship(back_populates="favorite_vehicles")
-
-class Pilots(db.Model): #association table for people and vehicles
-    __tablename__ = "pilots"
-    person_id: Mapped[int] = mapped_column(ForeignKey("people.id"), primary_key=True)
-    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"), primary_key=True)
-
-    person: Mapped["People"] = relationship(back_populates="pilots")
-    vehicle: Mapped["Vehicles"] = relationship(back_populates="pilots")
+    def serialize(self):
+        from models import db, Favorites
+        favorites = db.session.query(Favorites).filter_by(
+            item_type="vehicle",
+            item_id=self.id
+        ).all()
+        favorited_by = [fav.user.name for fav in favorites if fav.user]
+        return {
+            "id": self.id,
+            "name": self.name,
+            "consumables": self.consumables,
+            "cargo_capacity": self.cargo_capacity,
+            "max_atmosphering_speed": self.max_atmosphering_speed,
+            "crew": self.crew,
+            "length": self.length,
+            "model": self.model,
+            "vehicle_class": self.vehicle_class,
+            "favorited_by": favorited_by
+        }
 

@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, Users, Favorites, People, Planets, Species, Vehicles, Pilots
+from models import db, Users, Favorites, People, Planets, Species, Vehicles
 from sqlalchemy import select
 
 app = Flask(__name__)
@@ -88,7 +88,7 @@ def delete_user(id):
     return jsonify({"message": "User deleted"}), 200
 
 @app.route("/users/<int:id>/favorites", methods=["GET"])
-def get_user(id):
+def get_favorites(id):
     stmt = select(Favorites).where(Users.id == id)
     favorites = db.session.execute(stmt).scalar_one_or_none()
     if user is None:
@@ -96,7 +96,7 @@ def get_user(id):
     return jsonify(favorites.serialize()), 200
 
 @app.route("/favorite/planet/<int:id>", methods=["POST"])
-def create_user():
+def create_fav_planet():
     data = request.get_json()
     if not data or "name" not in data:
         return jsonify({"error": "Missing data"}), 400
@@ -107,8 +107,8 @@ def create_user():
     db.session.commit()
     return jsonify(new_fav_planet.serialize()), 201
 
-@app.route("/favorite/people/<int:people_id", methods=["POST"])
-def create_user():
+@app.route("/favorite/people/<int:id>", methods=["POST"])
+def create_fav_person():
     data = request.get_json()
     if not data or "name" not in data:
         return jsonify({"error": "Missing data"}), 400
@@ -120,7 +120,7 @@ def create_user():
     return jsonify(new_fav_person.serialize()), 201
 
 @app.route("/favorite/planet/<int:id>", methods=["DELETE"])
-def delete_user(id):
+def delete_fav_planet(id):
     stmt = select(Favorites).where(Favorites.id == id)
     fav_planet = db.session.execute(stmt).scalar_one_or_none()
     if user is None:
@@ -129,8 +129,8 @@ def delete_user(id):
     db.session.commit()
     return jsonify({"message": "Planet deleted"}), 200
 
-@app.route("favorite/people/<int:id>", methods=["DELETE"])
-def delete_user(id):
+@app.route("/favorite/people/<int:id>", methods=["DELETE"])
+def delete_fav_person(id):
     stmt = select(Favorites).where(Favorites.id == id)
     fav_person = db.session.execute(stmt).scalar_one_or_none()
     if fav_person is None:
@@ -173,7 +173,7 @@ def get_planet(id):
     return jsonify(planet.serialize()), 200
 
 @app.route('/species', methods=['GET'])
-def get_species():
+def get_all_species():
     species = db.session.execute(select(Species)).scalars().all()
     return jsonify([obj.serialize() for obj in species]), 200
 
@@ -197,19 +197,6 @@ def get_vehicle(id):
     if vehicle is None:
         return jsonify({"error": "Vehicle not found"}), 404
     return jsonify(vehicle.serialize()), 200
-
-@app.route('/pilots', methods=['GET'])
-def get_pilots():
-    pilots = db.session.execute(select(Pilots)).scalars().all()
-    return jsonify([obj.serialize() for obj in pilots]), 200
-
-@app.route("/pilots/<int:id>", methods=["GET"])
-def get_pilot(id):
-    stmt = select(Pilots).where(Pilots.id == id)
-    pilot = db.session.execute(stmt).scalar_one_or_none()
-    if pilot is None:
-        return jsonify({"error": "Pilot not found"}), 404
-    return jsonify(pilot.serialize()), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

@@ -1,13 +1,13 @@
 from app import app, db
-from models import Users, Favorites, People, Planets, Species, Vehicles, Pilots
+from models import Users, Favorites, People, Planets, Species, Vehicles
 
 with app.app_context():
     db.drop_all()
     db.create_all()
 
     #Users
-    user1 = Users(email="thomas.mosley@example.com", password="1234", is_active=True)
-    user2 = Users(email="thomas2.mosley2@example.com", password="1234", is_active=False)
+    user1 = Users(name="Thomas Mosley", email="thomas.mosley@example.com", password="1234", is_active=True)
+    user2 = Users(name="Jack Sprat", email="jack.sprat@example.com", password="1234", is_active=False)
     db.session.add_all([user1, user2])
     db.session.commit()
 
@@ -22,7 +22,7 @@ with app.app_context():
         population = 200000,
     )
     alderaan = Planets(
-        name = "Tatooine",
+        name = "Alderaan",
         climate = "temperate",
         surface_water = 40,
         diameter = 12500,
@@ -129,11 +129,16 @@ with app.app_context():
     db.session.add_all([sand_crawler, landspeeder])
     db.session.commit()
 
-    #pilots
-    pilot1 = Pilots(person=luke, vehicle=sand_crawler)
-    pilot2 = Pilots(person=luke, vehicle=landspeeder)
-    pilot3 = Pilots(person=c3po, vehicle=landspeeder)
-    db.session.add_all([pilot1, pilot2, pilot3])
+    #favorites
+    user1_fav_person = Favorites(user_id=user1.id, item_id=c3po.id, item_type="person", item_name=c3po.name)
+    user1_fav_person2 = Favorites(user_id=user1.id, item_id=luke.id, item_type="person", item_name=luke.name)
+    user1_fav_planet = Favorites(user_id=user1.id, item_id=tatooine.id, item_type="planet", item_name=tatooine.name)
+    user1_fav_species = Favorites(user_id=user1.id, item_id=droid.id, item_type="species", item_name=droid.name)
+    user1_fav_vehicle = Favorites(user_id=user1.id, item_id=sand_crawler.id, item_type="vehicle", item_name=sand_crawler.name)
+    user2_fav_person = Favorites(user_id=user2.id, item_id=leia.id, item_type="person", item_name=leia.name)
+    user2_fav_planet = Favorites(user_id=user2.id, item_id=alderaan.id, item_type="planet", item_name=alderaan.name)
+    user2_fav_vehicle = Favorites(user_id=user2.id, item_id=landspeeder.id, item_type="vehicle", item_name=landspeeder.name)
+    db.session.add_all([user1_fav_person, user1_fav_person2, user1_fav_planet, user1_fav_species, user1_fav_vehicle, user2_fav_person, user2_fav_planet, user2_fav_vehicle])
     db.session.commit()
 
     print("✅ Database seeded.")
