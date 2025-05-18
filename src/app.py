@@ -52,9 +52,10 @@ def get_user(id):
 @app.route("/users", methods=["POST"])
 def create_user():
     data = request.get_json()
-    if not data or "email" not in data or "password" not in data or "is_active" not in data:
+    if not data  or "name" not in data or "email" not in data or "password" not in data or "is_active" not in data:
         return jsonify({"error": "Missing data"}), 400
     new_user = Users(
+        name=data["name"],
         email=data["email"],
         password=data["password"],
         is_active=data["is_active"],
@@ -87,64 +88,262 @@ def delete_user(id):
     db.session.commit()
     return jsonify({"message": "User deleted"}), 200
 
-@app.route("/users/<int:id>/favorites", methods=["GET"])
-def get_favorites(id):
-    stmt = select(Favorites).where(Users.id == id)
-    favorites = db.session.execute(stmt).scalar_one_or_none()
-    if user is None:
-        return jsonify({"error": "User not found"}), 404
-    return jsonify(favorites.serialize()), 200
-
-@app.route("/favorite/planet/<int:id>", methods=["POST"])
-def create_fav_planet():
-    data = request.get_json()
-    if not data or "name" not in data:
-        return jsonify({"error": "Missing data"}), 400
-    new_fav_planet = Favorites(
-        name=data["name"]
-    )
-    db.session.add(new_fav_planet)
-    db.session.commit()
-    return jsonify(new_fav_planet.serialize()), 201
+@app.route("/users/favorites", methods=["GET"])
+def get_user_favorites():
+    current_user_id = 1 #to update later with authentication
+    stmt = select(Favorites).where(Users.id == current_user_id)
+    favorites = db.session.execute(stmt).scalars().all()
+    if favorites is None:
+        return jsonify({"error": "Favorites not found"}), 404
+    return jsonify([fav.serialize() for fav in favorites]), 200
 
 @app.route("/favorite/people/<int:id>", methods=["POST"])
-def create_fav_person():
-    data = request.get_json()
-    if not data or "name" not in data:
-        return jsonify({"error": "Missing data"}), 400
-    new_fav_person = Users(
-        name=data["name"]
+def create_fav_person(id):
+    current_user_id = 1 #to update later with authentication
+    user = db.session.get(Users, current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    person = db.session.get(People, id)
+    if not person:
+        return jsonify({"error": "Person not found"}), 404
+    new_fav_person = Favorites(
+        user_id=current_user_id,
+        item_id=person.id,
+        item_type="person",
+        item_name=person.name
     )
     db.session.add(new_fav_person)
     db.session.commit()
     return jsonify(new_fav_person.serialize()), 201
 
-@app.route("/favorite/planet/<int:id>", methods=["DELETE"])
-def delete_fav_planet(id):
-    stmt = select(Favorites).where(Favorites.id == id)
-    fav_planet = db.session.execute(stmt).scalar_one_or_none()
-    if user is None:
+@app.route("/favorite/planet/<int:id>", methods=["POST"])
+def create_fav_planet(id):
+    current_user_id = 1 #to update later with authentication
+    user = db.session.get(Users, current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    planet = db.session.get(Planets, id)
+    if not planet:
         return jsonify({"error": "Planet not found"}), 404
-    db.session.delete(fav_planet)
+    new_fav_planet = Favorites(
+        user_id=current_user_id,
+        item_id=planet.id,
+        item_type="planet",
+        item_name=planet.name
+    )
+    db.session.add(new_fav_planet)
     db.session.commit()
-    return jsonify({"message": "Planet deleted"}), 200
+    return jsonify(new_fav_planet.serialize()), 201
+
+@app.route("/favorite/species/<int:id>", methods=["POST"])
+def create_fav_species(id):
+    current_user_id = 1 #to update later with authentication
+    user = db.session.get(Users, current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    species = db.session.get(Species, id)
+    if not species:
+        return jsonify({"error": "Species not found"}), 404
+    new_fav_species = Favorites(
+        user_id=current_user_id,
+        item_id=species.id,
+        item_type="species",
+        item_name=species.name
+    )
+    db.session.add(new_fav_species)
+    db.session.commit()
+    return jsonify(new_fav_species.serialize()), 201
+
+@app.route("/favorite/vehicle/<int:id>", methods=["POST"])
+def create_fav_vehicle(id):
+    current_user_id = 1 #to update later with authentication
+    user = db.session.get(Users, current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    vehicle = db.session.get(Vehicles, id)
+    if not vehicle:
+        return jsonify({"error": "Vehicle not found"}), 404
+    new_fav_vehicle = Favorites(
+        user_id=current_user_id,
+        item_id=vehicle.id,
+        item_type="vehicle",
+        item_name=vehicle.name
+    )
+    db.session.add(new_fav_vehicle)
+    db.session.commit()
+    return jsonify(new_fav_vehicle.serialize()), 201
+
+@app.route("/people", methods=["POST"])
+def create_person():
+    data = request.get_json()
+    if not data  or "name" not in data:
+        return jsonify({"error": "Missing data"}), 400
+    new_person = People(
+        name=data["name"],
+        email=data["email"],
+        password=data["password"],
+        is_active=data["is_active"],
+    )
+    db.session.add(new_person)
+    db.session.commit()
+    return jsonify(new_person.serialize()), 201
+
+@app.route("/planets", methods=["POST"])
+def create_planet():
+    data = request.get_json()
+    if not data  or "name" not in data:
+        return jsonify({"error": "Missing data"}), 400
+    new_planet = Planets(
+        name=data["name"],
+        email=data["email"],
+        password=data["password"],
+        is_active=data["is_active"],
+    )
+    db.session.add(new_planet)
+    db.session.commit()
+    return jsonify(new_planet.serialize()), 201
+
+@app.route("/species", methods=["POST"])
+def create_species():
+    data = request.get_json()
+    if not data  or "name" not in data:
+        return jsonify({"error": "Missing data"}), 400
+    new_species = Species(
+        name=data["name"],
+        email=data["email"],
+        password=data["password"],
+        is_active=data["is_active"],
+    )
+    db.session.add(new_species)
+    db.session.commit()
+    return jsonify(new_species.serialize()), 201
+
+@app.route("/vehicles", methods=["POST"])
+def create_vehicle():
+    data = request.get_json()
+    if not data  or "name" not in data:
+        return jsonify({"error": "Missing data"}), 400
+    new_vehicle = Vehicles(
+        name=data["name"],
+        email=data["email"],
+        password=data["password"],
+        is_active=data["is_active"],
+    )
+    db.session.add(new_vehicle)
+    db.session.commit()
+    return jsonify(new_vehicle.serialize()), 201
+
+@app.route("/people/<int:id>", methods=["PUT"])
+def update_person(id):
+    data = request.get_json()
+    stmt = select(People).where(People.id == id)
+    person = db.session.execute(stmt).scalar_one_or_none()
+    if person is None:
+        return jsonify({"error": "Person not found"}), 404
+    user.email = data.get("email", user.email) 
+    user.password = data.get("password", user.password)
+    user.is_active = data.get("is_active", user.is_active)
+    db.session.commit()
+    return jsonify(person.serialize()), 200
+
+@app.route("/planets/<int:id>", methods=["PUT"])
+def update_planet(id):
+    data = request.get_json()
+    stmt = select(Planets).where(Planets.id == id)
+    planet = db.session.execute(stmt).scalar_one_or_none()
+    if planet is None:
+        return jsonify({"error": "User not found"}), 404
+    user.email = data.get("email", user.email) 
+    user.password = data.get("password", user.password)
+    user.is_active = data.get("is_active", user.is_active)
+    db.session.commit()
+    return jsonify(planet.serialize()), 200
+
+@app.route("/species/<int:id>", methods=["PUT"])
+def update_species(id):
+    data = request.get_json()
+    stmt = select(Species).where(Species.id == id)
+    species = db.session.execute(stmt).scalar_one_or_none()
+    if species is None:
+        return jsonify({"error": "User not found"}), 404
+    user.email = data.get("email", user.email) 
+    user.password = data.get("password", user.password)
+    user.is_active = data.get("is_active", user.is_active)
+    db.session.commit()
+    return jsonify(species.serialize()), 200
+
+@app.route("/vehicles/<int:id>", methods=["PUT"])
+def update_vehicle(id):
+    data = request.get_json()
+    stmt = select(Vehicles).where(Vehicles.id == id)
+    vehicle = db.session.execute(stmt).scalar_one_or_none()
+    if vehicle is None:
+        return jsonify({"error": "User not found"}), 404
+    user.email = data.get("email", user.email) 
+    user.password = data.get("password", user.password)
+    user.is_active = data.get("is_active", user.is_active)
+    db.session.commit()
+    return jsonify(vehicle.serialize()), 200
 
 @app.route("/favorite/people/<int:id>", methods=["DELETE"])
 def delete_fav_person(id):
-    stmt = select(Favorites).where(Favorites.id == id)
+    current_user_id = 1 #to update later with authentication
+    stmt = select(Favorites).where(
+        Favorites.user_id == current_user_id,
+        Favorites.item_type == "person",
+        Favorites.item_id == id
+        )
     fav_person = db.session.execute(stmt).scalar_one_or_none()
     if fav_person is None:
-        return jsonify({"error": "Person not found"}), 404
+        return jsonify({"error": "Favorite person not found"}), 404
     db.session.delete(fav_person)
     db.session.commit()
-    return jsonify({"message": "Person deleted"}), 200
+    return jsonify({"message": "Favorite person deleted"}), 200
 
-##deprecated version
-# @app.route('/people', methods=['GET'])
-# def get_people():
-#     people = People.query.all()
-#     response_body = [obj.serialize() for obj in people]
-#     return jsonify(response_body), 200
+@app.route("/favorite/planet/<int:id>", methods=["DELETE"])
+def delete_fav_planet(id):
+    current_user_id = 1 #to update later with authentication
+    stmt = select(Favorites).where(
+        Favorites.user_id == current_user_id,
+        Favorites.item_type == "planet",
+        Favorites.item_id == id
+        )
+    fav_planet = db.session.execute(stmt).scalar_one_or_none()
+    if fav_planet is None:
+        return jsonify({"error": "Favorite planet not found"}), 404
+    db.session.delete(fav_planet)
+    db.session.commit()
+    return jsonify({"message": "Favorite planet deleted"}), 200
+
+@app.route("/favorite/species/<int:id>", methods=["DELETE"])
+def delete_fav_species(id):
+    current_user_id = 1 #to update later with authentication
+    stmt = select(Favorites).where(
+        Favorites.user_id == current_user_id,
+        Favorites.item_type == "species",
+        Favorites.item_id == id
+        )
+    fav_species = db.session.execute(stmt).scalar_one_or_none()
+    if fav_species is None:
+        return jsonify({"error": "Favorite species not found"}), 404
+    db.session.delete(fav_species)
+    db.session.commit()
+    return jsonify({"message": "Favorite species deleted"}), 200
+
+@app.route("/favorite/vehicle/<int:id>", methods=["DELETE"])
+def delete_fav_vehicle(id):
+    current_user_id = 1 #to update later with authentication
+    stmt = select(Favorites).where(
+        Favorites.user_id == current_user_id,
+        Favorites.item_type == "vehicle",
+        Favorites.item_id == id
+        )
+    fav_vehicle = db.session.execute(stmt).scalar_one_or_none()
+    if fav_vehicle is None:
+        return jsonify({"error": "Favorite vehicle not found"}), 404
+    db.session.delete(fav_vehicle)
+    db.session.commit()
+    return jsonify({"message": "Favorite vehicle deleted"}), 200
 
 @app.route('/people', methods=['GET'])
 def get_people():
