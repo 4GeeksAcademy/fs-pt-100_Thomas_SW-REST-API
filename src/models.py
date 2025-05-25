@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Boolean, Integer, ForeignKey
+from sqlalchemy import String, Boolean, Integer, BigInteger, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
@@ -12,7 +12,7 @@ class Users(db.Model):
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
-    favorites: Mapped[list["Favorites"]] = relationship(back_populates="user")
+    favorites: Mapped[list["Favorites"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -46,12 +46,12 @@ class People(db.Model):
     __tablename__ = "people"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    gender: Mapped[str] = mapped_column(String(120))
-    skin_color: Mapped[str] = mapped_column(String(120))
-    hair_color: Mapped[str] = mapped_column(String(120))
-    height: Mapped[int] = mapped_column(Integer())
-    eye_color: Mapped[str] = mapped_column(String(120))
-    mass: Mapped[int] = mapped_column(Integer())
+    gender: Mapped[str] = mapped_column(String(120), nullable=True)
+    skin_color: Mapped[str] = mapped_column(String(120), nullable=True)
+    hair_color: Mapped[str] = mapped_column(String(120), nullable=True)
+    height: Mapped[int] = mapped_column(Integer(), nullable=True)
+    eye_color: Mapped[str] = mapped_column(String(120), nullable=True)
+    mass: Mapped[int] = mapped_column(Integer(), nullable=True)
 
     species_id: Mapped[int] = mapped_column(ForeignKey("species.id"), nullable=True)
     species: Mapped["Species"] = relationship(back_populates="members")
@@ -85,12 +85,12 @@ class Planets(db.Model):
     __tablename__ = "planets"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    climate:  Mapped[str] = mapped_column(String(120))
-    surface_water: Mapped[int] = mapped_column(Integer())
-    diameter: Mapped[int] = mapped_column(Integer())
-    gravity: Mapped[str] = mapped_column(String(120))
-    orbital_period: Mapped[int] = mapped_column(Integer())
-    population: Mapped[int] = mapped_column(Integer())
+    climate:  Mapped[str] = mapped_column(String(120), nullable=True)
+    surface_water: Mapped[int] = mapped_column(Integer(), nullable=True)
+    diameter: Mapped[int] = mapped_column(Integer(), nullable=True)
+    gravity: Mapped[str] = mapped_column(String(120), nullable=True)
+    orbital_period: Mapped[int] = mapped_column(Integer(), nullable=True)
+    population: Mapped[int] = mapped_column(BigInteger(), nullable=True)
     
     residents: Mapped[list["People"]] = relationship(back_populates="homeworld")
     fauna: Mapped[list["Species"]] = relationship(back_populates="homeworld")
@@ -120,12 +120,12 @@ class Species(db.Model):
     __tablename__ = "species"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    classification: Mapped[str] = mapped_column(String(120))
-    designation: Mapped[str] = mapped_column(String(120))
-    eye_colors: Mapped[str] = mapped_column(String(120))
-    skin_colors: Mapped[str] = mapped_column(String(120))
-    language: Mapped[str] = mapped_column(String(120))
-    hair_colors: Mapped[str] = mapped_column(String(120))
+    classification: Mapped[str] = mapped_column(String(120), nullable=True)
+    designation: Mapped[str] = mapped_column(String(120), nullable=True)
+    eye_colors: Mapped[str] = mapped_column(String(120), nullable=True)
+    skin_colors: Mapped[str] = mapped_column(String(120), nullable=True)
+    language: Mapped[str] = mapped_column(String(120), nullable=True)
+    hair_colors: Mapped[str] = mapped_column(String(120), nullable=True)
     average_lifespan:  Mapped[int] = mapped_column(Integer(), nullable=True)
     average_height:  Mapped[int] = mapped_column(Integer(), nullable=True)
     
@@ -159,15 +159,15 @@ class Species(db.Model):
 
 class Vehicles(db.Model):
     __tablename__ = "vehicles"
-    id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(120))
-    consumables: Mapped[str] = mapped_column(String(120))
-    cargo_capacity: Mapped[int] = mapped_column(Integer())
-    max_atmosphering_speed: Mapped[int] = mapped_column(Integer())
-    crew: Mapped[int] = mapped_column(Integer())
-    length: Mapped[int] = mapped_column(Integer())
-    model: Mapped[str] = mapped_column(String(120))
-    vehicle_class: Mapped[str] = mapped_column(String(120))
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    consumables: Mapped[str] = mapped_column(String(120), nullable=True)
+    cargo_capacity: Mapped[int] = mapped_column(Integer(), nullable=True)
+    max_atmosphering_speed: Mapped[int] = mapped_column(Integer(), nullable=True)
+    crew: Mapped[int] = mapped_column(Integer(), nullable=True)
+    length: Mapped[int] = mapped_column(Integer(), nullable=True)
+    model: Mapped[str] = mapped_column(String(120), nullable=True)
+    vehicle_class: Mapped[str] = mapped_column(String(120), nullable=True)
 
     def serialize(self):
         from models import db, Favorites
