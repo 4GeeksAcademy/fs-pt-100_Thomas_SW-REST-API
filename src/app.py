@@ -91,7 +91,7 @@ def delete_user(id):
 @app.route("/users/favorites", methods=["GET"])
 def get_user_favorites():
     current_user_id = 1 #to update later with authentication
-    stmt = select(Favorites).where(Users.id == current_user_id)
+    stmt = select(Favorites).where(Favorites.user_id == current_user_id)
     favorites = db.session.execute(stmt).scalars().all()
     if favorites is None:
         return jsonify({"error": "Favorites not found"}), 404
@@ -109,7 +109,7 @@ def create_fav_person(id):
     existing_fav = db.session.execute(
         db.select(Favorites).where(
             Favorites.user_id == current_user_id,
-            Favorites.item_id == people.id,
+            Favorites.item_id == person.id,
             Favorites.item_type == "people"
         )
     ).scalars().first()
